@@ -9,112 +9,73 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# ---------------- PAGE SETTINGS ----------------
+
+# =========================================================
+# PAGE SETTINGS
+# =========================================================
+
 st.set_page_config(
     page_title="Asif's Salary Predictor",
     page_icon="💼",
     layout="wide"
 )
 
-# ---------------- DESIGN ----------------
+
+# =========================================================
+# DESIGN
+# =========================================================
+
 st.markdown("""
 <style>
-.stApp {
-    background:
-        radial-gradient(circle at 15% 10%, rgba(94, 234, 212, 0.18), transparent 28%),
-        radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.24), transparent 30%),
-        linear-gradient(135deg, #071225 0%, #111b3d 50%, #1c1240 100%);
-    color: #f8fafc;
-}
-
-.block-container {
-    max-width: 1000px;
-    padding-top: 4rem;
-    padding-bottom: 3rem;
-}
 
 .app-title {
-    font-size: 3.2rem;
-    font-weight: 800;
     text-align: center;
-    background: linear-gradient(90deg, #67e8f9, #c4b5fd, #f9a8d4);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 45px;
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 5px;
 }
 
 .subtitle {
     text-align: center;
-    color: #cbd5e1;
-    font-size: 1.15rem;
-    margin-bottom: 2rem;
+    font-size: 20px;
+    margin-bottom: 35px;
 }
 
-.glass-card {
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 22px;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    padding: 28px;
-    margin: 20px 0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+.section-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 25px;
+    margin-bottom: 15px;
 }
 
-.metric-card {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.20);
-    border-radius: 16px;
-    padding: 16px;
+.result-box {
+    padding: 25px;
+    border-radius: 15px;
     text-align: center;
+    margin-top: 25px;
+    border: 1px solid rgba(128,128,128,0.3);
 }
 
-.metric-label {
-    color: #cbd5e1;
-    font-size: 0.9rem;
-}
-
-.metric-value {
-    color: white;
-    font-size: 1.6rem;
-    font-weight: bold;
-    margin-top: 5px;
-}
-
-.stButton > button {
-    width: 100%;
-    border: none;
-    border-radius: 12px;
-    padding: 0.8rem;
-    font-size: 1.05rem;
-    font-weight: bold;
-    color: #071225;
-    background: linear-gradient(90deg, #67e8f9, #c4b5fd);
-}
-
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(103, 232, 249, 0.30);
-}
-
-label, p, .stMarkdown {
-    color: #e2e8f0 !important;
-}
-
-.stTextInput input {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: white !important;
-    border-radius: 10px !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- PAGE STATE ----------------
+
+# =========================================================
+# PAGE STATE
+# =========================================================
+
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# ---------------- LOAD AND TRAIN MODEL ----------------
+
+# =========================================================
+# TRAIN MODEL
+# =========================================================
+
 @st.cache_resource
 def train_model():
+
     df = pd.read_csv("preprocessed_data.csv")
 
     features = [
@@ -147,13 +108,18 @@ def train_model():
         remainder="passthrough"
     )
 
-    model = Pipeline(steps=[
-        ("preprocessor", preprocessor),
-        ("random_forest", RandomForestRegressor(
-            n_estimators=200,
-            random_state=42
-        ))
-    ])
+    model = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            (
+                "random_forest",
+                RandomForestRegressor(
+                    n_estimators=200,
+                    random_state=42
+                )
+            )
+        ]
+    )
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -167,162 +133,323 @@ def train_model():
     y_pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+    rmse = np.sqrt(
+        mean_squared_error(y_test, y_pred)
+    )
+
     r2 = r2_score(y_test, y_pred)
 
-    return df, model, mae, rmse, r2
+    return model, mae, rmse, r2
 
-# ---------------- HOME PAGE ----------------
+
+# =========================================================
+# HOME PAGE
+# =========================================================
+
 if st.session_state.page == "home":
 
     st.markdown(
-        '<h1 class="app-title">💼 Asif\'s Salary Predictor</h1>',
+        "<h1 class='app-title'>💼 Asif's Salary Predictor</h1>",
         unsafe_allow_html=True
     )
 
     st.markdown(
-        '<p class="subtitle">Predict employee salaries using machine learning.</p>',
+        "<p class='subtitle'>"
+        "Predict employee salaries using Random Forest Machine Learning."
+        "</p>",
         unsafe_allow_html=True
     )
 
-    st.markdown("""
-    <div class="glass-card">
-        <h2>Welcome 👋</h2>
-        <p>
-            This web application predicts an employee's annual salary in
-            <b>LPA (Lakhs Per Annum)</b>.
-        </p>
-        <p>
-            The model uses information such as age, work experience, education,
-            job level, department, performance score, and weekly working hours.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.subheader("Welcome 👋")
 
-    st.markdown("""
-    <div class="glass-card">
-        <h2>🤖 Model Used</h2>
-        <p>
-            This application uses <b>Random Forest Regression</b>, a machine
-            learning model that combines many decision trees to make more
-            reliable salary predictions.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.write(
+        "This application predicts an employee's annual salary "
+        "in LPA (Lakhs Per Annum)."
+    )
 
-    if st.button("✨ Predict New Employee Salary"):
+    st.write(
+        "Enter employee information such as age, experience, "
+        "education, job level, department, performance score "
+        "and weekly working hours."
+    )
+
+    st.subheader("🤖 Model Used")
+
+    st.write(
+        "Random Forest Regression"
+    )
+
+    st.write(
+        "Random Forest combines multiple decision trees "
+        "to make salary predictions."
+    )
+
+    st.write("")
+
+    if st.button(
+        "✨ Predict New Employee Salary",
+        use_container_width=True
+    ):
+
         st.session_state.page = "predict"
         st.rerun()
 
-# ---------------- PREDICTION PAGE ----------------
+
+# =========================================================
+# PREDICTION PAGE
+# =========================================================
+
 elif st.session_state.page == "predict":
 
+    # Back button
     if st.button("← Back to Home"):
+
         st.session_state.page = "home"
         st.rerun()
 
+
     st.markdown(
-        '<h1 class="app-title">Salary Prediction</h1>',
+        "<h1 class='app-title'>Salary Prediction</h1>",
         unsafe_allow_html=True
     )
 
-    df, model, mae, rmse, r2 = train_model()
+    st.markdown(
+        "<p class='subtitle'>"
+        "Enter employee details to predict salary."
+        "</p>",
+        unsafe_allow_html=True
+    )
 
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📊 Model Performance")
+
+    # =====================================================
+    # LOAD MODEL
+    # =====================================================
+
+    try:
+
+        model, mae, rmse, r2 = train_model()
+
+    except FileNotFoundError:
+
+        st.error(
+            "preprocessed_data.csv was not found. "
+            "Please upload it to the same folder as app.py."
+        )
+
+        st.stop()
+
+    except Exception as e:
+
+        st.error(
+            f"Error loading the model: {e}"
+        )
+
+        st.stop()
+
+
+    # =====================================================
+    # MODEL PERFORMANCE - ABOVE EMPLOYEE DETAILS
+    # =====================================================
+
+    st.markdown(
+        "<div class='section-title'>📊 Model Performance</div>",
+        unsafe_allow_html=True
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown(
-            f'<div class="metric-card">'
-            f'<div class="metric-label">Average Error</div>'
-            f'<div class="metric-value">{mae:.2f} LPA</div>'
-            f'</div>',
-            unsafe_allow_html=True
+
+        st.metric(
+            label="Average Error",
+            value=f"{mae:.2f} LPA"
         )
 
     with col2:
-        st.markdown(
-            f'<div class="metric-card">'
-            f'<div class="metric-label">RMSE</div>'
-            f'<div class="metric-value">{rmse:.2f} LPA</div>'
-            f'</div>',
-            unsafe_allow_html=True
+
+        st.metric(
+            label="RMSE",
+            value=f"{rmse:.2f} LPA"
         )
 
     with col3:
-        st.markdown(
-            f'<div class="metric-card">'
-            f'<div class="metric-label">R² Score</div>'
-            f'<div class="metric-value">{r2:.2f}</div>'
-            f'</div>',
-            unsafe_allow_html=True
+
+        st.metric(
+            label="R² Score",
+            value=f"{r2:.2f}"
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("🔮 Enter Employee Details")
+    st.divider()
+
+
+    # =====================================================
+    # EMPLOYEE DETAILS
+    # =====================================================
+
+    st.markdown(
+        "<div class='section-title'>👤 Employee Details</div>",
+        unsafe_allow_html=True
+    )
+
+
+    # Employee Name FIRST
+
+    employee_name = st.text_input(
+        "Employee Name",
+        placeholder="Enter employee name"
+    )
+
+
+    st.markdown("### 🔮 Enter Employee Information")
+
 
     col1, col2 = st.columns(2)
 
+
+    # =====================================================
+    # NUMBER INPUTS
+    # =====================================================
+
     with col1:
-        age_text = st.text_input("Age", placeholder="Example: 25")
-        experience_text = st.text_input(
+
+        age = st.number_input(
+            "Age",
+            min_value=18,
+            max_value=70,
+            value=25,
+            step=1
+        )
+
+        experience = st.number_input(
             "Experience Years",
-            placeholder="Example: 3"
+            min_value=0.0,
+            max_value=50.0,
+            value=3.0,
+            step=0.5
         )
-        education = st.text_input(
-            "Education Level",
-            placeholder="Example: Bachelor's"
+
+        performance = st.number_input(
+            "Performance Score",
+            min_value=0.0,
+            max_value=5.0,
+            value=4.0,
+            step=0.1
         )
-        job_level = st.text_input(
-            "Job Level",
-            placeholder="Example: Junior"
+
+        hours = st.number_input(
+            "Weekly Working Hours",
+            min_value=10.0,
+            max_value=100.0,
+            value=40.0,
+            step=1.0
         )
+
+
+    # =====================================================
+    # DROPDOWNS
+    # =====================================================
 
     with col2:
-        department = st.text_input(
+
+        education = st.selectbox(
+            "Education Level",
+            [
+                "Bachelor",
+                "Master",
+                "PhD"
+            ]
+        )
+
+        job_level = st.selectbox(
+            "Job Level",
+            [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ]
+        )
+
+        department = st.selectbox(
             "Department",
-            placeholder="Example: IT"
-        )
-        performance_text = st.text_input(
-            "Performance Score",
-            placeholder="Example: 4.5"
-        )
-        hours_text = st.text_input(
-            "Weekly Working Hours",
-            placeholder="Example: 40"
+            [
+                "HR",
+                "Marketing",
+                "Finance",
+                "IT",
+                "Operations"
+            ]
         )
 
-    if st.button("✨ Predict Salary"):
-        try:
-            age = int(age_text)
-            experience = float(experience_text)
-            performance = float(performance_text)
-            hours = float(hours_text)
 
-            new_employee = pd.DataFrame([{
-                "Age": age,
-                "Experience_Years": experience,
-                "Education_Level": education,
-                "Job_Level": job_level,
-                "Department": department,
-                "Performance_Score": performance,
-                "Weekly_Working_Hours": hours
-            }])
+    st.write("")
 
-            predicted_salary = model.predict(new_employee)[0]
 
-            st.success(
-                f"🎉 Predicted Employee Salary: ₹ {predicted_salary:.2f} LPA"
+    # =====================================================
+    # PREDICT BUTTON
+    # =====================================================
+
+    if st.button(
+        "✨ Predict Salary",
+        use_container_width=True
+    ):
+
+        if employee_name.strip() == "":
+
+            st.warning(
+                "⚠️ Please enter the employee name."
             )
 
-        except ValueError:
-            st.error(
-                "Enter valid numbers for Age, Experience, "
-                "Performance Score, and Working Hours."
-            )
+        else:
 
-    st.markdown("</div>", unsafe_allow_html=True)
+            new_employee = pd.DataFrame([
+                {
+                    "Age": age,
+                    "Experience_Years": experience,
+                    "Education_Level": education,
+                    "Job_Level": job_level,
+                    "Department": department,
+                    "Performance_Score": performance,
+                    "Weekly_Working_Hours": hours
+                }
+            ])
+
+
+            predicted_salary = model.predict(
+                new_employee
+            )[0]
+
+
+            # =================================================
+            # CONGRATULATIONS
+            # =================================================
+
+            st.balloons()
+
+            st.markdown(
+                f"""
+                <div class="result-box">
+
+                <h2>🎉 Congratulations, {employee_name}!</h2>
+
+                <p style="font-size:20px;">
+                Based on the information you provided,
+                you are eligible for an estimated salary of:
+                </p>
+
+                <h1>
+                ₹ {predicted_salary:.2f} LPA
+                </h1>
+
+                <p>
+                🌟 Keep improving your skills and performance!
+                </p>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
